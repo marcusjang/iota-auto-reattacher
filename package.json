@@ -1,0 +1,20 @@
+{
+  "name": "iota-auto-reattacher",
+  "version": "0.1.0",
+  "description": "Yet another headless IOTA auto reattacher that listens in front of the IRI API endpoint",
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcusjang/iota-auto-reattacher.git"
+  },
+  "keywords": [
+    "IOTA"
+  ],
+  "author": "Marcus Jang <makerpopo@gmail.com>",
+  "license": "NONE",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "http-proxy": "^1.17.0",
+    "iota.lib.js": "^0.4.7"
+  }
+}
