@@ -3,7 +3,7 @@ const EXT_PORT = 14266;
 const DEPTH = 4;
 const MAINNET_MWM = 14;
 const REATTACH_MAX_COUNT = 5;
-const INTERVAL = 3 * 60 * 1000 // 15 minutes
+const INTERVAL = 15 * 60 * 1000 // 15 minutes
 
 const PROVIDER = 'http://localhost:' + IRI_PORT;
 
