@@ -15,6 +15,8 @@ const iota = new IOTA({ provider: PROVIDER });
 const Promise = require('bluebird');
 Promise.promisifyAll(iota.api);
 
+console.log(iota.api.promoteTransactionAsync);
+
 class Bundle {
 	constructor(trytesArray) {
 		const firstTx = iota.utils.transactionObject(trytesArray[0]);
@@ -47,8 +49,9 @@ class Bundle {
 			tLog('Ignoring zero value transactions...');
 		} else {
 			this.interval = setInterval(async bundle => {
-				await bundle.inclusionCheck();
 				tLog(`TRY: ${bundle.counter}/${REATTACH_MAX_COUNT}, BUNDLE: ${bundle.hash.substr(0, 10)}...`);
+				tLog(`  ┣ Checking the inclusion state...`);
+				await bundle.inclusionCheck();
 				if (bundle.isConfirmed || bundle.counter >= REATTACH_MAX_COUNT) {
 					clearInterval(bundle.interval);
 					if (bundle.isConfirmed) {
@@ -65,22 +68,18 @@ class Bundle {
 						tLog(`  ┣ Bundle successfully reattached. Time taken: ${(Date.now() - start)/1000}s`);
 						const newTail = reattach.find(tx => { return tx.currentIndex === 0; });
 						tLog(`  ┣ New tail hash: ${newTail.hash}`);
-						tLog(`  ┣ Checking the consistency of the reattached bundle...`);
-						setTimeout(async (bundle, newTail) => {
-							const isPromotable = await iota.api.isPromotable(newTail.hash);
-							if (!isPromotable) {
-								tLog(`  ┗ Consistency check failed, waiting for the next cycle...`);
-							} else {
-								tLog(`  ┗ Promoting the tail hash. Total number of promotes: ${bundle.length}...`);
-								(function loop(i) {
-									setTimeout(async (bundle, newTail) => {
-										const promote = await iota.api.promoteTransactionAsync(newTail.hash, DEPTH, MWM, { address: newTail.address, value: 0 });
-										tLog(`    ┗ Promote ${bundle.length - i + 1}/${bundle.length}, TX: ${promote.hash}`);
-										if (--i) look(i);
-									}, 1000, bundle, newTail);
-								})(bundle.length);
-							}
-						}, 1000, bundle, newTail);
+						tLog(`  ┗ Promoting the tail hash. Total number of promotes: ${bundle.length}...`);
+						(function loop(i) {
+							setTimeout(async (bundle, newTail) => {
+								try {
+									const promote = await iota.api.promoteTransactionAsync(newTail.hash, DEPTH, MAINNET_MWM, { address: newTail.address, value: 0 }, {});
+								} catch(err) {
+									tLog(`    ┗ Something went wrong while promoting... Commencing.`);
+								}
+								tLog(`    ┗ Promote ${bundle.length - i + 1}/${bundle.length}, TX: ${promote.hash}`);
+								if (--i) look(i);
+							}, 1000, bundle, newTail);
+						})(bundle.length);
 					} catch (err) {
 						tlog('ERROR: ' + err.message);
 					}
